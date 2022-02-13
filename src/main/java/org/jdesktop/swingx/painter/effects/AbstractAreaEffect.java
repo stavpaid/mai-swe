@@ -93,53 +93,7 @@ public class AbstractAreaEffect implements AreaEffect {
 
         // Apply the border glow effect
         if (isShapeMasked()) {
-            BufferedImage clipImage = getClipImage(effectBounds);
-            Graphics2D g2 = clipImage.createGraphics();
-
-            // lbalazscs: moved here from getClipImage
-            // in order to avoid two createGraphics calls
-            g2.clearRect(0, 0, clipImage.getWidth(), clipImage.getHeight());
-
-            try {
-                // clear the buffer
-                g2.setPaint(Color.BLACK);
-                g2.setComposite(AlphaComposite.Clear);
-                g2.fillRect(0, 0, effectBounds.width, effectBounds.height);
-
-                if (debug) {
-                    g2.setPaint(Color.WHITE);
-                    g2.setComposite(AlphaComposite.SrcOver);
-                    g2.drawRect(0, 0, effectBounds.width - 1,
-                        effectBounds.height - 1);
-                }
-
-                // turn on smoothing
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                    RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.translate(getEffectWidth() - getOffset().getX(),
-                    getEffectWidth() - getOffset().getY());
-                paintBorderGlow(g2, clipShape, width, height);
-
-                // clip out the parts we don't want
-                g2.setComposite(AlphaComposite.Clear);
-                g2.setColor(Color.WHITE);
-                if (isRenderInsideShape()) {
-                    // clip the outside
-                    Area area = new Area(effectBounds);
-                    area.subtract(new Area(clipShape));
-                    g2.fill(area);
-                } else {
-                    // clip the inside
-                    g2.fill(clipShape);
-                }
-            } finally {
-                // draw the final image
-                g2.dispose();
-            }
-
-            int drawX = (int) (-getEffectWidth() + getOffset().getX());
-            int drawY = (int) (-getEffectWidth() + getOffset().getY());
-            g.drawImage(clipImage, drawX, drawY, null);
+            shapedMaskBorderGlowEffect(g, clipShape, width, height, effectBounds);
         } else {
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             paintBorderGlow(g, clipShape, width, height);
@@ -151,6 +105,57 @@ public class AbstractAreaEffect implements AreaEffect {
 
         g.setComposite(savedComposite);
     }
+
+	private void shapedMaskBorderGlowEffect(Graphics2D g, Shape clipShape, int width, int height,
+			Rectangle effectBounds) {
+		BufferedImage clipImage = getClipImage(effectBounds);
+		Graphics2D g2 = clipImage.createGraphics();
+
+		// lbalazscs: moved here from getClipImage
+		// in order to avoid two createGraphics calls
+		g2.clearRect(0, 0, clipImage.getWidth(), clipImage.getHeight());
+
+		try {
+		    // clear the buffer
+		    g2.setPaint(Color.BLACK);
+		    g2.setComposite(AlphaComposite.Clear);
+		    g2.fillRect(0, 0, effectBounds.width, effectBounds.height);
+
+		    if (debug) {
+		        g2.setPaint(Color.WHITE);
+		        g2.setComposite(AlphaComposite.SrcOver);
+		        g2.drawRect(0, 0, effectBounds.width - 1,
+		            effectBounds.height - 1);
+		    }
+
+		    // turn on smoothing
+		    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+		        RenderingHints.VALUE_ANTIALIAS_ON);
+		    g2.translate(getEffectWidth() - getOffset().getX(),
+		        getEffectWidth() - getOffset().getY());
+		    paintBorderGlow(g2, clipShape, width, height);
+
+		    // clip out the parts we don't want
+		    g2.setComposite(AlphaComposite.Clear);
+		    g2.setColor(Color.WHITE);
+		    if (isRenderInsideShape()) {
+		        // clip the outside
+		        Area area = new Area(effectBounds);
+		        area.subtract(new Area(clipShape));
+		        g2.fill(area);
+		    } else {
+		        // clip the inside
+		        g2.fill(clipShape);
+		    }
+		} finally {
+		    // draw the final image
+		    g2.dispose();
+		}
+
+		int drawX = (int) (-getEffectWidth() + getOffset().getX());
+		int drawY = (int) (-getEffectWidth() + getOffset().getY());
+		g.drawImage(clipImage, drawX, drawY, null);
+	}
 
     transient BufferedImage _clipImage = null;
 
