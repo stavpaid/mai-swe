@@ -40,6 +40,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -165,51 +166,59 @@ public class Pixelitor {
 
         var paths = IOTasks.getCurrentWritePaths();
         if (!paths.isEmpty()) {
-            String msg = "<html>The writing of the following files is not finished yet. Exit anyway?<br><ul>";
-            for (String path : paths) {
-                msg += "<li>" + path;
-            }
-
-            String[] options = {"Wait 10 seconds", "Exit now"};
-            boolean wait = Dialogs.showOKCancelWarningDialog(
-                msg, "Warning", options, 0);
-
-            if (wait && IOTasks.isBusyWriting()) {
-                // wait on another thread so that the status bar
-                // can be updated while waiting
-                new Thread(() -> {
-                    Utils.sleep(10, TimeUnit.SECONDS);
-                    EventQueue.invokeLater(() -> exitApp(pw));
-                }).start();
-
-                return;
-            }
+            exitWhileWriting(pw, paths);
         }
 
         var unsavedComps = OpenImages.getUnsavedComps();
         if (!unsavedComps.isEmpty()) {
-            String msg;
-            if (unsavedComps.size() == 1) {
-                msg = format("<html>There are unsaved changes in <b>%s</b>." +
-                        "<br>Are you sure you want to exit?",
-                    unsavedComps.get(0).getName());
-            } else {
-                msg = "<html>There are unsaved changes. Are you sure you want to exit?" +
-                    "<br>Unsaved images:<ul>";
-                for (Composition comp : unsavedComps) {
-                    msg += "<li>" + comp.getName();
-                }
-            }
-
-            if (Dialogs.showYesNoWarningDialog(pw, "Unsaved changes", msg)) {
-                pw.setVisible(false);
-                AppPreferences.savePrefsAndExit();
-            }
+            exitOnUnsavedChanges(pw, unsavedComps);
         } else {
             pw.setVisible(false);
             AppPreferences.savePrefsAndExit();
         }
     }
+
+	private static void exitOnUnsavedChanges(PixelitorWindow pw, List<Composition> unsavedComps) {
+		String msg;
+		if (unsavedComps.size() == 1) {
+		    msg = format("<html>There are unsaved changes in <b>%s</b>." +
+		            "<br>Are you sure you want to exit?",
+		        unsavedComps.get(0).getName());
+		} else {
+		    msg = "<html>There are unsaved changes. Are you sure you want to exit?" +
+		        "<br>Unsaved images:<ul>";
+		    for (Composition comp : unsavedComps) {
+		        msg += "<li>" + comp.getName();
+		    }
+		}
+
+		if (Dialogs.showYesNoWarningDialog(pw, "Unsaved changes", msg)) {
+		    pw.setVisible(false);
+		    AppPreferences.savePrefsAndExit();
+		}
+	}
+
+	private static void exitWhileWriting(PixelitorWindow pw, Set<String> paths) {
+		String msg = "<html>The writing of the following files is not finished yet. Exit anyway?<br><ul>";
+		for (String path : paths) {
+		    msg += "<li>" + path;
+		}
+
+		String[] options = {"Wait 10 seconds", "Exit now"};
+		boolean wait = Dialogs.showOKCancelWarningDialog(
+		    msg, "Warning", options, 0);
+
+		if (wait && IOTasks.isBusyWriting()) {
+		    // wait on another thread so that the status bar
+		    // can be updated while waiting
+		    new Thread(() -> {
+		        Utils.sleep(10, TimeUnit.SECONDS);
+		        EventQueue.invokeLater(() -> exitApp(pw));
+		    }).start();
+
+		    return;
+		}
+	}
 
     /**
      * A possibility for automatic debugging or testing
