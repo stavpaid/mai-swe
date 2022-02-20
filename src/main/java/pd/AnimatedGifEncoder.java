@@ -743,20 +743,9 @@ class NeuQuant {
      */
     private void learn() {
 
-        int i, j, b, g, r;
-        int radius, rad, alpha, step, delta, samplepixels;
-        byte[] p;
-        int pix, lim;
-
-        if (lengthcount < minpicturebytes) {
-            samplefac = 1;
-        }
-        alphadec = 30 + ((samplefac - 1) / 3);
-        p = thepicture;
-        pix = 0;
-        lim = lengthcount;
-        samplepixels = lengthcount / (3 * samplefac);
-        delta = samplepixels / ncycles;
+    	int i;
+        int radius, rad, alpha, step;
+       
         alpha = initalpha;
         radius = initradius;
 
@@ -770,24 +759,35 @@ class NeuQuant {
 
         // fprintf(stderr,"beginning 1D learning: initial radius=%d\n", rad);
 
-        if (lengthcount < minpicturebytes) {
-            step = 3;
-        } else if ((lengthcount % prime1) != 0) {
-            step = 3 * prime1;
-        } else {
-            if ((lengthcount % prime2) != 0) {
-                step = 3 * prime2;
-            } else {
-                if ((lengthcount % prime3) != 0) {
-                    step = 3 * prime3;
-                } else {
-                    step = 3 * prime4;
-                }
-            }
-        }
+        step = setStep();
 
-        i = 0;
-        while (i < samplepixels) {
+        learningLoop(radius, rad, alpha, step);
+        
+        // fprintf(stderr,"finished 1D learning: final alpha=%f
+        // !\n",((float)alpha)/initalpha);
+    }
+
+	private void learningLoop(int radius, int rad, int alpha, int step) {
+		
+		byte[] p;
+		int k, j, b, g, r;
+		int delta, samplepixels;
+        int pix, lim;
+		
+        if (lengthcount < minpicturebytes) {
+            samplefac = 1;
+        }
+		alphadec = 30 + ((samplefac - 1) / 3);
+        
+		pix = 0;
+        lim = lengthcount;
+        samplepixels = lengthcount / (3 * samplefac);
+        delta = samplepixels / ncycles;
+        
+		k=0;
+		p = thepicture;
+		
+		while (k < samplepixels) {
             b = (p[pix + 0] & 0xff) << netbiasshift;
             g = (p[pix + 1] & 0xff) << netbiasshift;
             r = (p[pix + 2] & 0xff) << netbiasshift;
@@ -803,11 +803,11 @@ class NeuQuant {
                 pix -= lengthcount;
             }
 
-            i++;
+            k++;
             if (delta == 0) {
                 delta = 1;
             }
-            if (i % delta == 0) {
+            if (k % delta == 0) {
                 alpha -= alpha / alphadec;
                 radius -= radius / radiusdec;
                 rad = radius >> radiusbiasshift;
@@ -819,9 +819,27 @@ class NeuQuant {
                 }
             }
         }
-        // fprintf(stderr,"finished 1D learning: final alpha=%f
-        // !\n",((float)alpha)/initalpha);
-    }
+	}
+
+	private int setStep() {
+		int step;
+		if (lengthcount < minpicturebytes) {
+            step = 3;
+        } else if ((lengthcount % prime1) != 0) {
+            step = 3 * prime1;
+        } else {
+            if ((lengthcount % prime2) != 0) {
+                step = 3 * prime2;
+            } else {
+                if ((lengthcount % prime3) != 0) {
+                    step = 3 * prime3;
+                } else {
+                    step = 3 * prime4;
+                }
+            }
+        }
+		return step;
+	}
 
     /*
      * Search for BGR values 0..255 (after net is unbiased) and return colour
