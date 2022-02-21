@@ -82,17 +82,17 @@ class EnlargeCanvasGUI extends JPanel {
         c.anchor = GridBagConstraints.WEST;
 
         btnUsePixels.addActionListener(e -> {
-            syncValueToPixels(northRangePixels, northRangePercent);
-            syncValueToPixels(eastRangePixels, eastRangePercent);
-            syncValueToPixels(westRangePixels, westRangePercent);
-            syncValueToPixels(southRangePixels, southRangePercent);
+            RangeParam.syncValueToPixels(northRangePixels, northRangePercent);
+            RangeParam.syncValueToPixels(eastRangePixels, eastRangePercent);
+            RangeParam.syncValueToPixels(westRangePixels, westRangePercent);
+            RangeParam.syncValueToPixels(southRangePixels, southRangePercent);
         });
 
         btnUsePercentage.addActionListener(e -> {
-            syncValueToPercentage(northRangePercent, northRangePixels);
-            syncValueToPercentage(eastRangePercent, eastRangePixels);
-            syncValueToPercentage(westRangePercent, westRangePixels);
-            syncValueToPercentage(southRangePercent, southRangePixels);
+            RangeParam.syncValueToPercentage(northRangePercent, northRangePixels);
+            RangeParam.syncValueToPercentage(eastRangePercent, eastRangePixels);
+            RangeParam.syncValueToPercentage(westRangePercent, westRangePixels);
+            RangeParam.syncValueToPercentage(southRangePercent, southRangePixels);
         });
 
         new ButtonGroup() {{
@@ -104,14 +104,6 @@ class EnlargeCanvasGUI extends JPanel {
             add(btnUsePixels);
             add(btnUsePercentage);
         }}, c);
-    }
-
-    private static void syncValueToPixels(RangeParam pixels, RangeParam percent) {
-        pixels.setValue(pixels.getMaximum() * percent.getValueAsDouble() / 100, false);
-    }
-
-    private static void syncValueToPercentage(RangeParam percent, RangeParam pixels) {
-        percent.setValue(100 * pixels.getValueAsDouble() / pixels.getMaximum(), false);
     }
 
     private void addSliderSpinner(RangeParam percent, RangeParam pixels, String sliderName, int gridX, int gridY, int orientation) {

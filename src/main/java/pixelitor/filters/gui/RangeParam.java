@@ -458,7 +458,15 @@ public class RangeParam extends AbstractFilterParam implements BoundedRangeModel
             getClass().getSimpleName(), getName(), value);
     }
 
-    public static class Builder {
+    public static void syncValueToPixels(RangeParam pixels, RangeParam percent) {
+	    pixels.setValue(pixels.getMaximum() * percent.getValueAsDouble() / 100, false);
+	}
+
+	public static void syncValueToPercentage(RangeParam percent, RangeParam pixels) {
+	    percent.setValue(100 * pixels.getValueAsDouble() / pixels.getMaximum(), false);
+	}
+
+	public static class Builder {
         private final String name;
         private int min;
         private double def;
